@@ -129,7 +129,7 @@
 
   <!-- Red Vernier zero line -->
   <line id="zero-line"
-        x1="210" y1="28" x2="210" y2="190"
+        x1="210" y1="48" x2="210" y2="110"
         stroke="#dc4444" stroke-width="1.6"
         stroke-dasharray="5 4"/>
 
@@ -192,7 +192,7 @@
     const x = X0 + i * PIXELS_PER_MM;
 
     addSvg(mainTicks, "line", {
-      x1: x, y1: 58, x2: x,
+      x1: x, y1: 62, x2: x,
       // so cute: i % 5 === 0 ? 38 : 46 means "if i is a multiple of 5, y2 = 38, else y2 = 46"
       y2: i % 5 === 0 ? 38 : 46,
       stroke: "#36414b",
@@ -213,13 +213,13 @@
 
     addSvg(vernierTicks, "line", {
       x1: x, y1: 62, x2: x,
-      y2: j === 0 || j === 10 ? 79 : 72,
+      y2: j % 5 === 0  ? 79 : 72,
       stroke: "#315b77",
       "stroke-width": j % 5 === 0 ? 1.5 : 1
     });
 
     addSvg(vernierTicks, "text", {
-      x, y: 57,
+      x, y: 87,
       "text-anchor": "middle",
       "font-size": 11,
       fill: "#222"
@@ -260,19 +260,14 @@
       zeroX + j * PIXELS_PER_MM * 0.9;
 
     addSvg(highlights, "line", {
-      x1: vernierX, y1: 100,
-      x2: vernierX, y2: 130,
+      x1: vernierX, y1: 62,
+      x2: vernierX, y2: 75,
       stroke: "#ec72ad",
       "stroke-width": 4,
       "stroke-linecap": "round"
     });
 
-    addSvg(highlights, "circle", {
-      cx: vernierX, cy: 112, r: 2.8,
-      fill: "#ec72ad",
-      stroke: "#fff",
-      "stroke-width": 0.8
-    });
+  
   }
 
   function svgX(event) {

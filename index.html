@@ -38,6 +38,11 @@
     font-weight: 650;
     margin-top: 8px;
   }
+
+  #audio-settings {
+    margin-top: 12px;
+    white-space: pre-line;
+  }
 </style>
 </head>
 <body>
@@ -150,6 +155,7 @@
 
 <div id="reading">0.00 cm</div>
 <button id="reset">Reset to 0</button>
+<div id="audio-settings" aria-label="Click audio settings"></div>
 
 <script>
 (() => {
@@ -160,8 +166,27 @@
   const zeroLine = document.getElementById("zero-line");
   const highlights = document.getElementById("highlight-overlay");
   const reading = document.getElementById("reading");
+  const audioSettingsDisplay = document.getElementById("audio-settings");
 
   const NS = "http://www.w3.org/2000/svg";
+  const clickAudioSettings = {
+    oscillatorType: "sine",
+    oscillatorFrequency: 1000,
+    oscillatorRamp: 650,
+    gainValue: 0.0001,
+    gainRamp1: 0.22,
+    gainRamp2: 0.0001
+  };
+
+  audioSettingsDisplay.textContent = [
+    "Click audio settings",
+    `Oscillator type: ${clickAudioSettings.oscillatorType}`,
+    `Oscillator frequency: ${clickAudioSettings.oscillatorFrequency} Hz`,
+    `Oscillator exponentialRamp value: ${clickAudioSettings.oscillatorRamp} Hz`,
+    `Gain value: ${clickAudioSettings.gainValue}`,
+    `Gain ramp1: ${clickAudioSettings.gainRamp1}`,
+    `Gain ramp2: ${clickAudioSettings.gainRamp2}`
+  ].join("\n");
 
   // Scale geometry
   const X0 = 210;
@@ -194,13 +219,13 @@ function playCaliperClick() {
   const gain = audioContext.createGain();
 
   // Short, sharp mechanical click.
-  oscillator.type = "sine";
-  oscillator.frequency.setValueAtTime(1000, now);
-  oscillator.frequency.exponentialRampToValueAtTime(650, now + 0.018);
+  oscillator.type = clickAudioSettings.oscillatorType;
+  oscillator.frequency.setValueAtTime(clickAudioSettings.oscillatorFrequency, now);
+  oscillator.frequency.exponentialRampToValueAtTime(clickAudioSettings.oscillatorRamp, now + 0.018);
 
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.22, now + 0.002);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.025);
+  gain.gain.setValueAtTime(clickAudioSettings.gainValue, now);
+  gain.gain.exponentialRampToValueAtTime(clickAudioSettings.gainRamp1, now + 0.002);
+  gain.gain.exponentialRampToValueAtTime(clickAudioSettings.gainRamp2, now + 0.025);
 
   oscillator.connect(gain);
   gain.connect(audioContext.destination);

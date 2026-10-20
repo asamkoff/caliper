@@ -164,10 +164,10 @@
   const NS = "http://www.w3.org/2000/svg";
 
   // Scale geometry
-  const X0 = 210;
+  const SCALE_ORIGIN_X_PX = 210;
   const PIXELS_PER_CM = 24;
   const MAX_CM = 19;
-  const DRAG_STEP = 0.02;
+  const DRAG_STEP_CM = 0.02;
 
   let cm = 0;
   let dragging = false;
@@ -224,7 +224,7 @@ function playCaliperClick() {
 
   // Main scale: labels 1 through 20; no zero tick.
   for (let i = 1; i <= 20; i++) {
-    const x = X0 + i * PIXELS_PER_CM;
+    const x = SCALE_ORIGIN_X_PX + i * PIXELS_PER_CM;
 
     addSvg(mainTicks, "line", {
       x1: x, y1: 62, x2: x,
@@ -261,26 +261,33 @@ function playCaliperClick() {
     }, String(j));
   }
 
-  function update(showHighlights = true) {
+  function getMeasurement() {
     const whole = Math.floor(cm + 1e-7);
     const fraction = cm - whole;
+    const vernierInterval = Math.min(9, Math.floor(fraction * 10 + 1e-7));
 
-    // Highlight the corresponding Vernier interval.
-    const j = Math.min(9, Math.floor(fraction * 10 + 1e-7));
+    return {
+      whole,
+      vernierInterval,
+      zeroX: SCALE_ORIGIN_X_PX + cm * PIXELS_PER_CM
+    };
+  }
 
-    const zeroX = X0 + cm * PIXELS_PER_CM;
-
+  function renderPosition(measurement) {
+    const { zeroX } = measurement;
     slider.setAttribute("transform", `translate(${zeroX}, 0)`);
     zeroLine.setAttribute("x1", zeroX);
     zeroLine.setAttribute("x2", zeroX);
     reading.textContent = cm.toFixed(2) + "cm";
+  }
 
+  function renderHighlights(measurement, showHighlights) {
     highlights.replaceChildren();
 
     if (!showHighlights) return;
 
     // Pink main-scale tick: whole-cm measurement.
-    const mainX = X0 + whole * PIXELS_PER_CM;
+    const mainX = SCALE_ORIGIN_X_PX + measurement.whole * PIXELS_PER_CM;
 
     addSvg(highlights, "line", {
       x1: mainX, y1: 38,
@@ -292,7 +299,7 @@ function playCaliperClick() {
 
     // Pink Vernier tick: calculated in global SVG coordinates.
     const vernierX =
-      zeroX + j * PIXELS_PER_CM * 0.9;
+      measurement.zeroX + measurement.vernierInterval * PIXELS_PER_CM * 0.9;
 
     addSvg(highlights, "line", {
       x1: vernierX, y1: 62,
@@ -301,8 +308,12 @@ function playCaliperClick() {
       "stroke-width": 4,
       "stroke-linecap": "round"
     });
+  }
 
-  
+  function update(showHighlights = true) {
+    const measurement = getMeasurement();
+    renderPosition(measurement);
+    renderHighlights(measurement, showHighlights);
   }
 
   function svgX(event) {
@@ -330,17 +341,17 @@ function playCaliperClick() {
   svg.addEventListener("pointermove", event => {
     if (!dragging) return;
 
-      const deltaCm = (svgX(event) - startX) / PIXELS_PER_CM;
+    const deltaCm = (svgX(event) - startX) / PIXELS_PER_CM;
 
     cm = Math.max(
       0,
       Math.min(
         MAX_CM,
-        Math.round((startCm + deltaCm) / DRAG_STEP) * DRAG_STEP
+        Math.round((startCm + deltaCm) / DRAG_STEP_CM) * DRAG_STEP_CM
       )
     );
     
-    //multiply by 10 to get more clicks
+    // Play a click for each 0.2 cm crossed (5 clicks per cm)
     const oldStep = Math.floor(previousCm * 5 + 1e-7);
     const newStep = Math.floor(cm * 5 + 1e-7);
 

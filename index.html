@@ -40,8 +40,26 @@
   }
 
   #audio-settings {
+    display: grid;
+    gap: 10px;
     margin-top: 12px;
-    white-space: pre-line;
+    max-width: 520px;
+  }
+
+  .audio-control {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) auto;
+    align-items: center;
+    gap: 4px 12px;
+  }
+
+  .audio-control input {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .audio-control select {
+    min-width: 130px;
   }
 </style>
 </head>
@@ -156,7 +174,43 @@
 <div id="reading">0.00 cm</div>
 <button id="reset">Reset to 0</button>
 <button id="randomize-audio">Randomize audio settings</button>
-<div id="audio-settings" aria-label="Click audio settings"></div>
+<section id="audio-settings" aria-label="Click audio settings">
+  <h3>Click audio settings</h3>
+  <div class="audio-control">
+    <label for="oscillator-type">Oscillator type</label>
+    <select id="oscillator-type">
+      <option value="sine">Sine</option>
+      <option value="triangle">Triangle</option>
+      <option value="square">Square</option>
+      <option value="sawtooth">Sawtooth</option>
+    </select>
+  </div>
+  <div class="audio-control">
+    <label for="oscillator-frequency">Oscillator frequency</label>
+    <output id="oscillator-frequency-value" for="oscillator-frequency"></output>
+    <input id="oscillator-frequency" type="range" min="200" max="2000" step="10" value="1000">
+  </div>
+  <div class="audio-control">
+    <label for="oscillator-ramp">Oscillator exponentialRamp value</label>
+    <output id="oscillator-ramp-value" for="oscillator-ramp"></output>
+    <input id="oscillator-ramp" type="range" min="100" max="1600" step="10" value="650">
+  </div>
+  <div class="audio-control">
+    <label for="gain-value">Gain value</label>
+    <output id="gain-value-display" for="gain-value"></output>
+    <input id="gain-value" type="range" min="0.00005" max="0.001" step="0.00001" value="0.0001">
+  </div>
+  <div class="audio-control">
+    <label for="gain-ramp1">Gain ramp1</label>
+    <output id="gain-ramp1-value" for="gain-ramp1"></output>
+    <input id="gain-ramp1" type="range" min="0.05" max="0.4" step="0.001" value="0.22">
+  </div>
+  <div class="audio-control">
+    <label for="gain-ramp2">Gain ramp2</label>
+    <output id="gain-ramp2-value" for="gain-ramp2"></output>
+    <input id="gain-ramp2" type="range" min="0.00005" max="0.01" step="0.00001" value="0.0001">
+  </div>
+</section>
 
 <script>
 (() => {
@@ -167,8 +221,15 @@
   const zeroLine = document.getElementById("zero-line");
   const highlights = document.getElementById("highlight-overlay");
   const reading = document.getElementById("reading");
-  const audioSettingsDisplay = document.getElementById("audio-settings");
   const randomizeAudioButton = document.getElementById("randomize-audio");
+  const oscillatorTypeControl = document.getElementById("oscillator-type");
+  const audioSliderControls = [
+    { setting: "oscillatorFrequency", input: document.getElementById("oscillator-frequency"), output: document.getElementById("oscillator-frequency-value"), unit: " Hz" },
+    { setting: "oscillatorRamp", input: document.getElementById("oscillator-ramp"), output: document.getElementById("oscillator-ramp-value"), unit: " Hz" },
+    { setting: "gainValue", input: document.getElementById("gain-value"), output: document.getElementById("gain-value-display"), unit: "" },
+    { setting: "gainRamp1", input: document.getElementById("gain-ramp1"), output: document.getElementById("gain-ramp1-value"), unit: "" },
+    { setting: "gainRamp2", input: document.getElementById("gain-ramp2"), output: document.getElementById("gain-ramp2-value"), unit: "" }
+  ];
 
   const NS = "http://www.w3.org/2000/svg";
   const oscillatorTypes = ["sine", "triangle", "square", "sawtooth"];
@@ -188,35 +249,46 @@
     gainRamp2: 0.0001
   };
 
-  function updateAudioSettingsDisplay() {
-    audioSettingsDisplay.textContent = [
-      "Click audio settings",
-      `Oscillator type: ${clickAudioSettings.oscillatorType}`,
-      `Oscillator frequency: ${clickAudioSettings.oscillatorFrequency} Hz`,
-      `Oscillator exponentialRamp value: ${clickAudioSettings.oscillatorRamp} Hz`,
-      `Gain value: ${clickAudioSettings.gainValue}`,
-      `Gain ramp1: ${clickAudioSettings.gainRamp1}`,
-      `Gain ramp2: ${clickAudioSettings.gainRamp2}`
-    ].join("\n");
+  function syncAudioSettingsControls() {
+    oscillatorTypeControl.value = clickAudioSettings.oscillatorType;
+    for (const control of audioSliderControls) {
+      control.input.value = String(clickAudioSettings[control.setting]);
+      control.output.textContent = control.input.value + control.unit;
+    }
   }
 
-  function randomNumber(min, max, decimalPlaces) {
-    const scale = 10 ** decimalPlaces;
-    return Math.floor(Math.random() * (max * scale - min * scale + 1) + min * scale) / scale;
+  oscillatorTypeControl.addEventListener("change", () => {
+    clickAudioSettings.oscillatorType = oscillatorTypeControl.value;
+  });
+
+  for (const control of audioSliderControls) {
+    control.input.addEventListener("input", () => {
+      clickAudioSettings[control.setting] = Number(control.input.value);
+      control.output.textContent = control.input.value + control.unit;
+    });
+  }
+
+  function randomNumber(min, max, step) {
+    const numberOfSteps = Math.round((max - min) / step);
+    const decimalPlaces = (String(step).split(".")[1] || "").length;
+    const randomStep = Math.floor(Math.random() * (numberOfSteps + 1));
+    return Number((min + randomStep * step).toFixed(decimalPlaces));
   }
 
   randomizeAudioButton.addEventListener("click", () => {
     clickAudioSettings.oscillatorType =
       oscillatorTypes[Math.floor(Math.random() * oscillatorTypes.length)];
-    clickAudioSettings.oscillatorFrequency = randomNumber(400, 1600, 0);
-    clickAudioSettings.oscillatorRamp = randomNumber(200, 1200, 0);
-    clickAudioSettings.gainValue = randomNumber(0.00005, 0.001, 5);
-    clickAudioSettings.gainRamp1 = randomNumber(0.08, 0.3, 3);
-    clickAudioSettings.gainRamp2 = randomNumber(0.00005, 0.005, 5);
-    updateAudioSettingsDisplay();
+    for (const control of audioSliderControls) {
+      clickAudioSettings[control.setting] = randomNumber(
+        Number(control.input.min),
+        Number(control.input.max),
+        Number(control.input.step)
+      );
+    }
+    syncAudioSettingsControls();
   });
 
-  updateAudioSettingsDisplay();
+  syncAudioSettingsControls();
 
   // Scale geometry
   const X0 = 210;

@@ -169,10 +169,45 @@
   const MAX_MM = 19;
   const DRAG_STEP = 0.02;
 
-  let mm = 0;
+  let cm = 0;
   let dragging = false;
   let startX = 0;
-  let startMm = 0;
+  let startCm = 0;
+
+let audioContext = null;
+let lastClickCm = 0;
+
+function playCaliperClick() {
+  // Create audio only after the user interacts with the page.
+  if (!audioContext) {
+    audioContext = new (
+      window.AudioContext || window.webkitAudioContext
+    )();
+  }
+
+  if (audioContext.state === "suspended") {
+    audioContext.resume();
+  }
+
+  const now = audioContext.currentTime;
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+
+  // Short, sharp mechanical click.
+  oscillator.type = "triangle";
+  oscillator.frequency.setValueAtTime(1800, now);
+  oscillator.frequency.exponentialRampToValueAtTime(650, now + 0.018);
+
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.22, now + 0.002);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.025);
+
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+
+  oscillator.start(now);
+  oscillator.stop(now + 0.03);
+}
 
   function addSvg(parent, tag, attrs, text = "") {
     const el = document.createElementNS(NS, tag);
@@ -227,18 +262,18 @@
   }
 
   function update(showHighlights = true) {
-    const whole = Math.floor(mm + 1e-7);
-    const fraction = mm - whole;
+    const whole = Math.floor(cm + 1e-7);
+    const fraction = cm - whole;
 
     // Highlight the corresponding Vernier interval.
     const j = Math.min(9, Math.floor(fraction * 10 + 1e-7));
 
-    const zeroX = X0 + mm * PIXELS_PER_MM;
+    const zeroX = X0 + cm * PIXELS_PER_MM;
 
     slider.setAttribute("transform", `translate(${zeroX}, 0)`);
     zeroLine.setAttribute("x1", zeroX);
     zeroLine.setAttribute("x2", zeroX);
-    reading.textContent = mm.toFixed(2) + "cm";
+    reading.textContent = cm.toFixed(2) + "cm";
 
     highlights.replaceChildren();
 
@@ -283,7 +318,7 @@
   svg.addEventListener("pointerdown", event => {
     dragging = true;
     startX = svgX(event);
-    startMm = mm;
+    startCm = cm;
 
     svg.classList.add("dragging");
     svg.setPointerCapture(event.pointerId);
@@ -293,15 +328,23 @@
   svg.addEventListener("pointermove", event => {
     if (!dragging) return;
 
-    const deltaMm = (svgX(event) - startX) / PIXELS_PER_MM;
+      const deltaCm = (svgX(event) - startX) / PIXELS_PER_MM;
 
-    mm = Math.max(
+    cm = Math.max(
       0,
       Math.min(
         MAX_MM,
-        Math.round((startMm + deltaMm) / DRAG_STEP) * DRAG_STEP
+        Math.round((startCm + deltaCm) / DRAG_STEP) * DRAG_STEP
       )
     );
+
+    const currentCm = Math.floor(cm*10 + 1e-7);
+    
+    if (currentCm !== lastClickCm) {
+      playCaliperClick();
+      lastClickCm = currentCm;
+    }
+
 
     update(false);
   });
@@ -317,7 +360,7 @@
   svg.addEventListener("pointercancel", finishDrag);
 
   document.getElementById("reset").addEventListener("click", () => {
-    mm = 0;
+    cm = 0;
     dragging = false;
     update(true);
   });

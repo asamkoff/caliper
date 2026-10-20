@@ -155,6 +155,7 @@
 
 <div id="reading">0.00 cm</div>
 <button id="reset">Reset to 0</button>
+<button id="randomize-audio">Randomize audio settings</button>
 <div id="audio-settings" aria-label="Click audio settings"></div>
 
 <script>
@@ -167,8 +168,17 @@
   const highlights = document.getElementById("highlight-overlay");
   const reading = document.getElementById("reading");
   const audioSettingsDisplay = document.getElementById("audio-settings");
+  const randomizeAudioButton = document.getElementById("randomize-audio");
 
   const NS = "http://www.w3.org/2000/svg";
+  const oscillatorTypes = ["sine", "triangle", "square", "sawtooth"];
+  //Interesting parameters:
+//   Oscillator type: sine
+// Oscillator frequency: 893 Hz
+// Oscillator exponentialRamp value: 1099 Hz
+// Gain value: 0.00012
+// Gain ramp1: 0.284
+// Gain ramp2: 0.00151
   const clickAudioSettings = {
     oscillatorType: "sine",
     oscillatorFrequency: 1000,
@@ -178,15 +188,35 @@
     gainRamp2: 0.0001
   };
 
-  audioSettingsDisplay.textContent = [
-    "Click audio settings",
-    `Oscillator type: ${clickAudioSettings.oscillatorType}`,
-    `Oscillator frequency: ${clickAudioSettings.oscillatorFrequency} Hz`,
-    `Oscillator exponentialRamp value: ${clickAudioSettings.oscillatorRamp} Hz`,
-    `Gain value: ${clickAudioSettings.gainValue}`,
-    `Gain ramp1: ${clickAudioSettings.gainRamp1}`,
-    `Gain ramp2: ${clickAudioSettings.gainRamp2}`
-  ].join("\n");
+  function updateAudioSettingsDisplay() {
+    audioSettingsDisplay.textContent = [
+      "Click audio settings",
+      `Oscillator type: ${clickAudioSettings.oscillatorType}`,
+      `Oscillator frequency: ${clickAudioSettings.oscillatorFrequency} Hz`,
+      `Oscillator exponentialRamp value: ${clickAudioSettings.oscillatorRamp} Hz`,
+      `Gain value: ${clickAudioSettings.gainValue}`,
+      `Gain ramp1: ${clickAudioSettings.gainRamp1}`,
+      `Gain ramp2: ${clickAudioSettings.gainRamp2}`
+    ].join("\n");
+  }
+
+  function randomNumber(min, max, decimalPlaces) {
+    const scale = 10 ** decimalPlaces;
+    return Math.floor(Math.random() * (max * scale - min * scale + 1) + min * scale) / scale;
+  }
+
+  randomizeAudioButton.addEventListener("click", () => {
+    clickAudioSettings.oscillatorType =
+      oscillatorTypes[Math.floor(Math.random() * oscillatorTypes.length)];
+    clickAudioSettings.oscillatorFrequency = randomNumber(400, 1600, 0);
+    clickAudioSettings.oscillatorRamp = randomNumber(200, 1200, 0);
+    clickAudioSettings.gainValue = randomNumber(0.00005, 0.001, 5);
+    clickAudioSettings.gainRamp1 = randomNumber(0.08, 0.3, 3);
+    clickAudioSettings.gainRamp2 = randomNumber(0.00005, 0.005, 5);
+    updateAudioSettingsDisplay();
+  });
+
+  updateAudioSettingsDisplay();
 
   // Scale geometry
   const X0 = 210;

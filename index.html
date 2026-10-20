@@ -148,6 +148,11 @@
       <path d="M 0,160 H -10 V 180 H 0 Z"
             fill="#d9dfe4" stroke="#737e88"/>
     </g>
+
+    <text x="235" y="85" text-anchor="middle"
+        font-size="9" fill="#000000">
+    mm
+  </text>
   </g>
 
   <!-- Red Vernier zero line -->
@@ -158,9 +163,22 @@
 
   <text x="210" y="19" text-anchor="middle"
         font-size="11" fill="#dc4444">0</text>
+  
+  
 
   <!-- Pink highlight overlay: always drawn above the slider -->
   <g id="highlight-overlay" pointer-events="none"></g>
+
+  <text x="194" y="55" text-anchor="middle"
+        font-size="12" fill="#000000">
+    cm
+  </text>
+  
+  <text x="400" y="226" text-anchor="middle"
+        font-size="11" fill="#000000">
+    <tspan x="400">Drag the Vernier jaw to measure.  The millimeter measurement is gotten by aligning tick marks between the main scale and the millimeter scale.</tspan>
+    <tspan x="400" dy="14">When two ticks do not align exactly, take the first of the two tick marks "embraced" by the main scale ticks.</tspan>
+  </text>
 </svg>
 
 <div id="reading">0.00 cm</div>

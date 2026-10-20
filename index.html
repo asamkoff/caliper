@@ -166,7 +166,7 @@
   // Scale geometry
   const X0 = 210;
   const PIXELS_PER_MM = 24;
-  const MAX_MM = 19;
+  const MAX_CM = 19;
   const DRAG_STEP = 0.02;
 
   let cm = 0;
@@ -194,8 +194,8 @@ function playCaliperClick() {
   const gain = audioContext.createGain();
 
   // Short, sharp mechanical click.
-  oscillator.type = "triangle";
-  oscillator.frequency.setValueAtTime(1800, now);
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(1000, now);
   oscillator.frequency.exponentialRampToValueAtTime(650, now + 0.018);
 
   gain.gain.setValueAtTime(0.0001, now);
@@ -314,11 +314,13 @@ function playCaliperClick() {
       svg.getScreenCTM().inverse()
     ).x;
   }
+  let previousCm = cm;
 
   svg.addEventListener("pointerdown", event => {
     dragging = true;
     startX = svgX(event);
     startCm = cm;
+    previousCm = cm;
 
     svg.classList.add("dragging");
     svg.setPointerCapture(event.pointerId);
@@ -333,18 +335,23 @@ function playCaliperClick() {
     cm = Math.max(
       0,
       Math.min(
-        MAX_MM,
+        MAX_CM,
         Math.round((startCm + deltaCm) / DRAG_STEP) * DRAG_STEP
       )
     );
-
-    const currentCm = Math.floor(cm*10 + 1e-7);
     
-    if (currentCm !== lastClickCm) {
-      playCaliperClick();
-      lastClickCm = currentCm;
-    }
+    //multiply by 10 to get more clicks
+    const oldStep = Math.floor(previousCm * 5 + 1e-7);
+    const newStep = Math.floor(cm * 5 + 1e-7);
 
+    if (oldStep !== newStep) {
+      const count = Math.abs(newStep - oldStep);
+
+      for (let i = 0; i < count; i++) {
+        playCaliperClick();
+      }
+    } 
+    previousCm = cm;
 
     update(false);
   });

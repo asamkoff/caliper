@@ -148,7 +148,7 @@
   </text>
 </svg>
 
-<div id="reading">0.00 mm</div>
+<div id="reading">0.00 cm</div>
 <button id="reset">Reset to 0</button>
 
 <script>
@@ -165,7 +165,7 @@
 
   // Scale geometry
   const X0 = 210;
-  const PIXELS_PER_MM = 24;
+  const PIXELS_PER_CM = 24;
   const MAX_CM = 19;
   const DRAG_STEP = 0.02;
 
@@ -224,7 +224,7 @@ function playCaliperClick() {
 
   // Main scale: labels 1 through 20; no zero tick.
   for (let i = 1; i <= 20; i++) {
-    const x = X0 + i * PIXELS_PER_MM;
+    const x = X0 + i * PIXELS_PER_CM;
 
     addSvg(mainTicks, "line", {
       x1: x, y1: 62, x2: x,
@@ -244,7 +244,7 @@ function playCaliperClick() {
 
   // Vernier: 10 intervals across 9 main-scale intervals.
   for (let j = 0; j <= 10; j++) {
-    const x = j * PIXELS_PER_MM * 0.9;
+    const x = j * PIXELS_PER_CM * 0.9;
 
     addSvg(vernierTicks, "line", {
       x1: x, y1: 62, x2: x,
@@ -268,7 +268,7 @@ function playCaliperClick() {
     // Highlight the corresponding Vernier interval.
     const j = Math.min(9, Math.floor(fraction * 10 + 1e-7));
 
-    const zeroX = X0 + cm * PIXELS_PER_MM;
+    const zeroX = X0 + cm * PIXELS_PER_CM;
 
     slider.setAttribute("transform", `translate(${zeroX}, 0)`);
     zeroLine.setAttribute("x1", zeroX);
@@ -279,8 +279,8 @@ function playCaliperClick() {
 
     if (!showHighlights) return;
 
-    // Pink main-scale tick: whole-mm measurement.
-    const mainX = X0 + whole * PIXELS_PER_MM;
+    // Pink main-scale tick: whole-cm measurement.
+    const mainX = X0 + whole * PIXELS_PER_CM;
 
     addSvg(highlights, "line", {
       x1: mainX, y1: 38,
@@ -292,7 +292,7 @@ function playCaliperClick() {
 
     // Pink Vernier tick: calculated in global SVG coordinates.
     const vernierX =
-      zeroX + j * PIXELS_PER_MM * 0.9;
+      zeroX + j * PIXELS_PER_CM * 0.9;
 
     addSvg(highlights, "line", {
       x1: vernierX, y1: 62,
@@ -330,7 +330,7 @@ function playCaliperClick() {
   svg.addEventListener("pointermove", event => {
     if (!dragging) return;
 
-      const deltaCm = (svgX(event) - startX) / PIXELS_PER_MM;
+      const deltaCm = (svgX(event) - startX) / PIXELS_PER_CM;
 
     cm = Math.max(
       0,
